@@ -1,0 +1,28 @@
+# Fichiers de travail (racine uniquement)
+/*.psd
+/*.ai
+/*.indd
+/*.pages
+/*.pdf
+/*.zip
+/*.jpeg
+/*.jpg
+/*.webp
+/*.png
+/*.PNG
+/text.png
+/cercles.png
+/voltigeuse.png
+/MEMM.png
+/images.jpeg
+/couv-dossier.jpg
+
+# Dossiers inutiles
+/swisstransfer_*/
+/wetransfer_*/
+/ChatGPT Image*
+/Screenshot*
+/aff*
+
+# Système
+.DS_Store

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Ronde</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0e0d0d;
+      --accent: rgba(255, 255, 255, 0.85);
+      --muted: rgba(255, 255, 255, 0.65);
+      --dur: 700ms;
+      --ease: cubic-bezier(0.76, 0, 0.18, 1);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    /* ─── Viewer : donne la perspective pour l'effet 3D de roue ─── */
+    #viewer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      perspective: 1300px;
+      perspective-origin: 50% 50%;
+    }
+
+    /* ─── Pages : toutes positionnées en absolu, centrées ────────── */
+    .page {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 90px;
+      will-change: transform, opacity;
+      /* La transition est appliquée dynamiquement via JS pour éviter
+         un flash au chargement, puis réactivée */
+    }
+
+    .page img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      border-radius: 2px;
+      /* L'ombre varie aussi selon la distance — appliquée via JS */
+    }
+
+    /* ─── Nav buttons ─────────────────────────────────────────────── */
+    .nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 200;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 28px 18px;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    body:hover .nav-btn { opacity: 1; }
+    .nav-btn:hover { opacity: 1 !important; }
+    .nav-btn.prev { left: 14px; }
+    .nav-btn.next { right: 14px; }
+
+    .nav-btn svg {
+      width: 30px; height: 30px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.2s ease;
+    }
+    .nav-btn.prev:hover svg { transform: translateX(-3px); }
+    .nav-btn.next:hover svg { transform: translateX(3px); }
+
+    /* ─── Header ──────────────────────────────────────────────────── */
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 26px 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 150;
+      pointer-events: none;
+    }
+
+    #title {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    #counter {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 3px;
+      font-weight: 400;
+    }
+
+    /* ─── Indicateur circulaire ───────────────────────────────────── */
+    #ronde {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 150;
+      width: 88px; height: 88px;
+    }
+
+    #ronde svg {
+      width: 100%; height: 100%;
+      overflow: visible;
+    }
+
+    .dot-ring {
+      fill: none;
+      stroke: rgba(255,255,255,0.07);
+      stroke-width: 1;
+    }
+
+    .ronde-dot {
+      fill: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: fill 0.4s ease;
+    }
+    .ronde-dot.active { fill: rgba(255,255,255,0.85); }
+
+    #dots-group {
+      transform-origin: 44px 44px;
+      transition: transform var(--dur) var(--ease);
+    }
+
+    /* ─── Hint ────────────────────────────────────────────────────── */
+    #hint {
+      position: fixed;
+      bottom: 128px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 300;
+      opacity: 1;
+      transition: opacity 1.2s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #hint.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+
+  <header id="header">
+    <span id="title">Ronde</span>
+    <span id="counter">1 / 13</span>
+  </header>
+
+  <div id="viewer"></div>
+
+  <button class="nav-btn prev" id="btn-prev" aria-label="Page précédente">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="nav-btn next" id="btn-next" aria-label="Page suivante">
+    <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+  </button>
+
+  <div id="ronde">
+    <svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+      <circle class="dot-ring" cx="44" cy="44" r="34"/>
+      <g id="dots-group"></g>
+    </svg>
+  </div>
+
+  <p id="hint">← tourner la ronde →</p>
+
+  <script>
+    const TOTAL = 13;
+
+    // ─── Paramètres de la roue ──────────────────────────────────────
+    const STEP   = 230;  // px entre deux positions adjacentes
+    const MAX_D  = 6;    // distance max visible (demi-roue)
+
+    // Opacité selon la distance circulaire
+    function opacityAt(d) {
+      const t = [1, 0.14, 0.08, 0.055, 0.035, 0.022, 0.013];
+      return t[Math.min(Math.abs(d), t.length - 1)];
+    }
+
+    // Ombre portée selon la distance
+    function shadowAt(d) {
+      if (d === 0) return '0 30px 90px rgba(0,0,0,0.65)';
+      return '0 10px 30px rgba(0,0,0,0.3)';
+    }
+
+    // Scale selon la distance
+    function scaleAt(d) {
+      return Math.max(0.62, 1 - Math.abs(d) * 0.065);
+    }
+
+    // RotateY selon la distance — renforce la sensation de cylindre
+    function rotYAt(d) {
+      return d * 5.5; // degrés
+    }
+
+    // Distance circulaire la plus courte entre deux indices
+    function circDist(from, to) {
+      let d = to - from;
+      if (d >  TOTAL / 2) d -= TOTAL;
+      if (d < -TOTAL / 2) d += TOTAL;
+      return d;
+    }
+
+    // ─── État ───────────────────────────────────────────────────────
+    let current     = 0;
+    let isAnimating = false;
+
+    // ─── Build DOM ──────────────────────────────────────────────────
+    const viewer  = document.getElementById('viewer');
+    const pageEls = Array.from({ length: TOTAL }, (_, i) => {
+      const div = document.createElement('div');
+      div.className = 'page';
+
+      const img = document.createElement('img');
+      img.src      = `export pages/Desktop - ${i + 1}.png`;
+      img.alt      = `Page ${i + 1}`;
+      img.draggable = false;
+
+      div.appendChild(img);
+      viewer.appendChild(div);
+      return div;
+    });
+
+    // ─── Position de toutes les pages ───────────────────────────────
+    function positionAll(animate) {
+      pageEls.forEach((el, i) => {
+        const d    = circDist(current, i);
+        const absD = Math.abs(d);
+
+        const tx      = d * STEP;
+        const scale   = scaleAt(d);
+        const opacity = opacityAt(d);
+        const rotY    = rotYAt(d);
+        const zIndex  = 100 - absD * 8;
+
+        el.style.transition = animate
+          ? `transform var(--dur) var(--ease), opacity var(--dur) ease, box-shadow var(--dur) ease`
+          : 'none';
+
+        el.style.transform = `translateX(${tx}px) scale(${scale}) rotateY(${rotY}deg)`;
+        el.style.opacity   = opacity;
+        el.style.zIndex    = zIndex;
+
+        // Ombre sur l'image
+        el.querySelector('img').style.boxShadow = shadowAt(d);
+
+        // Pointer events : seule la page active est cliquable
+        el.style.pointerEvents = d === 0 ? 'auto' : 'none';
+      });
+    }
+
+    // ─── Indicateur circulaire ───────────────────────────────────────
+    const dotsGroup = document.getElementById('dots-group');
+    const dotEls    = Array.from({ length: TOTAL }, (_, i) => {
+      const angle = (i / TOTAL) * 2 * Math.PI - Math.PI / 2;
+      const r  = 34;
+      const cx = 44 + r * Math.cos(angle);
+      const cy = 44 + r * Math.sin(angle);
+
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', cx);
+      c.setAttribute('cy', cy);
+      c.setAttribute('r', 2);
+      c.classList.add('ronde-dot');
+      c.addEventListener('click', () => goTo(i));
+      dotsGroup.appendChild(c);
+      return c;
+    });
+
+    function updateDots() {
+      const deg = -(current * 360 / TOTAL);
+      dotsGroup.style.transform = `rotate(${deg}deg)`;
+      dotEls.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    // ─── Navigation ─────────────────────────────────────────────────
+    function goTo(index, animate = true) {
+      if (isAnimating || index === current) return;
+      isAnimating = true;
+      current     = ((index % TOTAL) + TOTAL) % TOTAL;
+
+      positionAll(animate);
+      updateDots();
+      document.getElementById('counter').textContent = `${current + 1} / ${TOTAL}`;
+
+      setTimeout(() => { isAnimating = false; }, 750);
+    }
+
+    function goNext() { goTo((current + 1) % TOTAL); hideHint(); }
+    function goPrev() { goTo((current - 1 + TOTAL) % TOTAL); hideHint(); }
+
+    // ─── Init sans animation ─────────────────────────────────────────
+    positionAll(false);
+    updateDots();
+
+    // ─── Keyboard ────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goNext(); }
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); goPrev(); }
+    });
+
+    // ─── Boutons ─────────────────────────────────────────────────────
+    document.getElementById('btn-next').addEventListener('click', goNext);
+    document.getElementById('btn-prev').addEventListener('click', goPrev);
+
+    // ─── Swipe tactile ───────────────────────────────────────────────
+    let txStart = null, tyStart = null;
+
+    viewer.addEventListener('touchstart', e => {
+      txStart = e.touches[0].clientX;
+      tyStart = e.touches[0].clientY;
+    }, { passive: true });
+
+    viewer.addEventListener('touchend', e => {
+      if (txStart === null) return;
+      const dx = e.changedTouches[0].clientX - txStart;
+      const dy = e.changedTouches[0].clientY - tyStart;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        dx < 0 ? goNext() : goPrev();
+      }
+      txStart = null;
+    }, { passive: true });
+
+    // ─── Glisser souris ──────────────────────────────────────────────
+    let mxStart = null, isDragging = false;
+
+    viewer.addEventListener('mousedown', e => { mxStart = e.clientX; isDragging = true; });
+    window.addEventListener('mouseup',   e => {
+      if (!isDragging) return;
+      const dx = e.clientX - mxStart;
+      if (Math.abs(dx) > 55) { dx < 0 ? goNext() : goPrev(); }
+      isDragging = false;
+    });
+
+    // ─── Molette / trackpad ───────────────────────────────────────────
+    let wCooldown = false;
+    viewer.addEventListener('wheel', e => {
+      e.preventDefault();
+      if (wCooldown) return;
+      const d = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      d > 0 ? goNext() : goPrev();
+      wCooldown = true;
+      setTimeout(() => { wCooldown = false; }, 750);
+    }, { passive: false });
+
+    // ─── Hint ─────────────────────────────────────────────────────────
+    const hint = document.getElementById('hint');
+    let hintDone = false;
+    function hideHint() {
+      if (!hintDone) { hintDone = true; hint.classList.add('hidden'); }
+    }
+    setTimeout(hideHint, 4500);
+  </script>
+</body>
+</html>
