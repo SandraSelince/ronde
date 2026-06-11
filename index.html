@@ -174,7 +174,7 @@
 
   <header id="header">
     <span id="title">Ronde</span>
-    <span id="counter">1 / 13</span>
+    <span id="counter">1 / 20</span>
   </header>
 
   <div id="viewer"></div>
@@ -196,7 +196,7 @@
   <p id="hint">← tourner la ronde →</p>
 
   <script>
-    const TOTAL = 13;
+    const TOTAL = 20;
 
     // ─── Paramètres de la roue ──────────────────────────────────────
     const STEP   = 230;  // px entre deux positions adjacentes
@@ -238,12 +238,22 @@
 
     // ─── Build DOM ──────────────────────────────────────────────────
     const viewer  = document.getElementById('viewer');
-    const pageEls = Array.from({ length: TOTAL }, (_, i) => {
+    const PAGE_FILES = [
+      'Desktop - 40.png', 'Desktop - 41.png', 'Desktop - 42.png',
+      'Desktop - 43.png', 'Desktop - 47.png', 'Desktop - 49.png',
+      'Desktop - 50.png', 'Desktop - 51.png', 'Desktop - 52.png',
+      'Desktop - 53.png', 'Desktop - 54.png', 'Desktop - 55.png',
+      'Desktop - 56.png', 'Desktop - 57.png', 'Desktop - 58.png',
+      'Desktop - 59.png', 'Desktop - 60.png', 'Desktop - 61.png',
+      'Desktop - 62.png', 'Desktop - 63.png'
+    ];
+
+    const pageEls = PAGE_FILES.map((file, i) => {
       const div = document.createElement('div');
       div.className = 'page';
 
       const img = document.createElement('img');
-      img.src      = `export pages/Desktop - ${i + 1}.png`;
+      img.src      = `export pages/V2/${file}`;
       img.alt      = `Page ${i + 1}`;
       img.draggable = false;
 
