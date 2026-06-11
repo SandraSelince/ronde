@@ -153,7 +153,8 @@
 
     /* ─── Page 4 drawing animation ───────────────────────────────── */
     #page4-draw-overlay {
-      position: absolute;
+      position: fixed;
+      z-index: 120;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.9s ease;
@@ -368,7 +369,7 @@
 
     const drawOverlay = document.createElement('div');
     drawOverlay.id    = 'page4-draw-overlay';
-    page4div.appendChild(drawOverlay);
+    document.body.appendChild(drawOverlay); // fixed outside the 3D perspective context
 
     const drawFrameEls = [
       'export pages/Im1.png',
