@@ -361,8 +361,8 @@
     updateDots();
 
     // ─── Page 4 drawing animation ────────────────────────────────────
-    // Drawing bounding box as fractions of 4.png (846×1153)
-    const DRAW_FRAC = { left: 0.053, top: 0.638, width: 0.893, height: 0.338 };
+    // Drawing bounding box as fractions of 4.png (846×1153) — empty yellow area at bottom
+    const DRAW_FRAC = { left: 0.033, top: 0.624, width: 0.934, height: 0.324 };
 
     const page4div = pageEls[3];
     const page4img = page4div.querySelector('img');
@@ -372,8 +372,9 @@
     page4div.appendChild(drawOverlay);
 
     const drawFrameEls = [
-      'export pages/Dessin-ronde-2.png',
-      'export pages/Dessin-ronde-3.png'
+      'export pages/Im1.png',
+      'export pages/Im2.png',
+      'export pages/Im3.png'
     ].map(src => {
       const f = document.createElement('img');
       f.src       = src;
