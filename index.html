@@ -151,6 +151,25 @@
       transition: transform var(--dur) var(--ease);
     }
 
+    /* ─── Page 4 drawing animation ───────────────────────────────── */
+    #page4-draw-overlay {
+      position: absolute;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    #page4-draw-overlay.active { opacity: 1; }
+    .draw-anim-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    .draw-anim-frame.show { opacity: 1; }
+
     /* ─── Hint ────────────────────────────────────────────────────── */
     #hint {
       position: fixed;
@@ -321,11 +340,15 @@
     function goTo(index, animate = true) {
       if (isAnimating || index === current) return;
       isAnimating = true;
+      const prev  = current;
       current     = ((index % TOTAL) + TOTAL) % TOTAL;
 
       positionAll(animate);
       updateDots();
       document.getElementById('counter').textContent = `${current + 1} / ${TOTAL}`;
+
+      if (current === 3) startDrawAnim();
+      else if (prev === 3) stopDrawAnim();
 
       setTimeout(() => { isAnimating = false; }, 750);
     }
@@ -336,6 +359,86 @@
     // ─── Init sans animation ─────────────────────────────────────────
     positionAll(false);
     updateDots();
+
+    // ─── Page 4 drawing animation ────────────────────────────────────
+    // Drawing bounding box as fractions of 4.png (846×1153)
+    const DRAW_FRAC = { left: 0.053, top: 0.638, width: 0.893, height: 0.338 };
+
+    const page4div = pageEls[3];
+    const page4img = page4div.querySelector('img');
+
+    const drawOverlay = document.createElement('div');
+    drawOverlay.id    = 'page4-draw-overlay';
+    page4div.appendChild(drawOverlay);
+
+    const drawFrameEls = [
+      'export pages/Dessin-ronde-2.png',
+      'export pages/Dessin-ronde-3.png'
+    ].map(src => {
+      const f = document.createElement('img');
+      f.src       = src;
+      f.className = 'draw-anim-frame';
+      f.draggable = false;
+      drawOverlay.appendChild(f);
+      return f;
+    });
+
+    let drawFrameIdx = -1, drawStartTimer = null, drawCycleTimer = null;
+
+    function positionDrawOverlay() {
+      if (!page4img.naturalWidth) return;
+      const pageRect = page4div.getBoundingClientRect();
+      const imgRect  = page4img.getBoundingClientRect();
+      const scale    = Math.min(imgRect.width  / page4img.naturalWidth,
+                                imgRect.height / page4img.naturalHeight);
+      const rW = page4img.naturalWidth  * scale;
+      const rH = page4img.naturalHeight * scale;
+      const oX = imgRect.left + (imgRect.width  - rW) / 2 - pageRect.left;
+      const oY = imgRect.top  + (imgRect.height - rH) / 2 - pageRect.top;
+      Object.assign(drawOverlay.style, {
+        left:   (oX + DRAW_FRAC.left  * rW) + 'px',
+        top:    (oY + DRAW_FRAC.top   * rH) + 'px',
+        width:  (DRAW_FRAC.width  * rW) + 'px',
+        height: (DRAW_FRAC.height * rH) + 'px'
+      });
+    }
+
+    function advanceDraw() {
+      drawFrameEls.forEach(f => f.classList.remove('show'));
+      drawFrameIdx = (drawFrameIdx + 1) % drawFrameEls.length;
+      drawFrameEls[drawFrameIdx].classList.add('show');
+    }
+
+    function startDrawAnim() {
+      clearTimeout(drawStartTimer);
+      clearInterval(drawCycleTimer);
+      drawFrameIdx = 0;
+      drawFrameEls.forEach(f => { f.style.transition = 'none'; f.classList.remove('show'); });
+      drawFrameEls[0].classList.add('show');
+      positionDrawOverlay();
+      requestAnimationFrame(() => drawFrameEls.forEach(f => { f.style.transition = ''; }));
+
+      drawStartTimer = setTimeout(() => {
+        drawOverlay.classList.add('active');
+        drawCycleTimer = setInterval(advanceDraw, 2200);
+      }, 1000);
+    }
+
+    function stopDrawAnim() {
+      clearTimeout(drawStartTimer);
+      clearInterval(drawCycleTimer);
+      drawStartTimer = drawCycleTimer = null;
+      drawOverlay.classList.remove('active');
+      setTimeout(() => {
+        drawFrameEls.forEach(f => f.classList.remove('show'));
+        drawFrameIdx = -1;
+      }, 900);
+    }
+
+    window.addEventListener('resize', () => { if (current === 3) positionDrawOverlay(); });
+    page4img.addEventListener('load', () => {
+      if (current === 3 && drawOverlay.classList.contains('active')) positionDrawOverlay();
+    });
 
     // ─── Keyboard ────────────────────────────────────────────────────
     document.addEventListener('keydown', e => {
