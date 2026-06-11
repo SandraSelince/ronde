@@ -424,9 +424,11 @@
       // Wait for page transition (700ms) to finish before measuring position
       drawStartTimer = setTimeout(() => {
         positionDrawOverlay();
+        drawOverlay.style.transition = 'none';   // Im1 apparaît instantanément
         drawOverlay.classList.add('active');
+        requestAnimationFrame(() => { drawOverlay.style.transition = ''; });
         drawCycleTimer = setInterval(advanceDraw, 2200);
-      }, 1000);
+      }, 750);
     }
 
     function stopDrawAnim() {
