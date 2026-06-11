@@ -399,9 +399,9 @@
       const w = DRAW_FRAC.width  * rW;
       const h = DRAW_FRAC.height * rH;
 
-      // Centered on the full viewport (horizontally and vertically)
+      // Horizontally centered, flush with the bottom of the rendered image
       const left = (pageRect.width  - w) / 2;
-      const top  = (pageRect.height - h) / 2;
+      const top  = imgOY + rH - h;
 
       Object.assign(drawOverlay.style, {
         left:   left + 'px',
