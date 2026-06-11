@@ -155,7 +155,6 @@
     #page4-draw-overlay {
       position: absolute;
       pointer-events: none;
-      overflow: hidden;
       opacity: 0;
       transition: opacity 0.9s ease;
     }
@@ -394,13 +393,21 @@
                                 imgRect.height / page4img.naturalHeight);
       const rW = page4img.naturalWidth  * scale;
       const rH = page4img.naturalHeight * scale;
-      const oX = imgRect.left + (imgRect.width  - rW) / 2 - pageRect.left;
-      const oY = imgRect.top  + (imgRect.height - rH) / 2 - pageRect.top;
+      const imgOX = imgRect.left + (imgRect.width  - rW) / 2 - pageRect.left;
+      const imgOY = imgRect.top  + (imgRect.height - rH) / 2 - pageRect.top;
+
+      const w = DRAW_FRAC.width  * rW * 1.2;
+      const h = DRAW_FRAC.height * rH * 1.2;
+      const left    = imgOX + (rW - w) / 2;
+      const areaTop = imgOY + DRAW_FRAC.top * rH;
+      const areaH   = rH * (1 - DRAW_FRAC.top);
+      const top     = areaTop + (areaH - h) / 2;
+
       Object.assign(drawOverlay.style, {
-        left:   (oX + DRAW_FRAC.left  * rW) + 'px',
-        top:    (oY + DRAW_FRAC.top   * rH) + 'px',
-        width:  (DRAW_FRAC.width  * rW) + 'px',
-        height: (DRAW_FRAC.height * rH) + 'px'
+        left:   left + 'px',
+        top:    top  + 'px',
+        width:  w    + 'px',
+        height: h    + 'px'
       });
     }
 
