@@ -388,25 +388,21 @@
 
     function positionDrawOverlay() {
       if (!page4img.naturalWidth) return;
-      // Avoid getBoundingClientRect — unreliable inside a 3D perspective context.
-      // Compute directly from the viewport size and .page padding (48px 90px).
-      const vw     = window.innerWidth;
-      const vh     = window.innerHeight;
-      const padH   = 90, padV = 48;
-      const avW    = vw - 2 * padH;
-      const avH    = vh - 2 * padV;
-      const scale  = Math.min(avW / page4img.naturalWidth,
-                              avH / page4img.naturalHeight);
-      const rW     = page4img.naturalWidth  * scale;
-      const rH     = page4img.naturalHeight * scale;
-      const imgTop = padV + (avH - rH) / 2;
-
-      const w = DRAW_FRAC.width  * rW;
-      const h = DRAW_FRAC.height * rH;
+      // Overlay is position:fixed on body — getBoundingClientRect gives
+      // viewport coordinates that map directly to fixed top/left.
+      const r     = page4img.getBoundingClientRect();
+      // 4.png = 846×1153, drawings = 790×374 (exact pixel values)
+      const scale = Math.min(r.width / 846, r.height / 1153);
+      const rW    = 846  * scale;
+      const rH    = 1153 * scale;
+      const imgX  = r.left + (r.width  - rW) / 2;
+      const imgY  = r.top  + (r.height - rH) / 2;
+      const w     = 790  * scale;
+      const h     = 374  * scale;
 
       Object.assign(drawOverlay.style, {
-        left:   ((vw - w) / 2)    + 'px',
-        top:    (imgTop + rH - h) + 'px',
+        left:   (imgX + (rW - w) / 2) + 'px',
+        top:    (imgY + rH - h)       + 'px',
         width:  w + 'px',
         height: h + 'px'
       });
