@@ -399,13 +399,9 @@
       const w = DRAW_FRAC.width  * rW;
       const h = DRAW_FRAC.height * rH;
 
-      // Horizontally centered on the full page
-      const left = (pageRect.width - w) / 2;
-
-      // Vertically centered in the yellow area
-      const areaTop = imgOY + DRAW_FRAC.top * rH;
-      const areaH   = rH * (1 - DRAW_FRAC.top);
-      const top     = areaTop + (areaH - h) / 2;
+      // Centered on the full viewport (horizontally and vertically)
+      const left = (pageRect.width  - w) / 2;
+      const top  = (pageRect.height - h) / 2;
 
       Object.assign(drawOverlay.style, {
         left:   left + 'px',
@@ -427,10 +423,11 @@
       drawFrameIdx = 0;
       drawFrameEls.forEach(f => { f.style.transition = 'none'; f.classList.remove('show'); });
       drawFrameEls[0].classList.add('show');
-      positionDrawOverlay();
       requestAnimationFrame(() => drawFrameEls.forEach(f => { f.style.transition = ''; }));
 
+      // Wait for page transition (700ms) to finish before measuring position
       drawStartTimer = setTimeout(() => {
+        positionDrawOverlay();
         drawOverlay.classList.add('active');
         drawCycleTimer = setInterval(advanceDraw, 2200);
       }, 1000);
