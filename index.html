@@ -239,13 +239,16 @@
     // ─── Build DOM ──────────────────────────────────────────────────
     const viewer  = document.getElementById('viewer');
     const PAGE_FILES = [
-      'Desktop - 40.png', 'Desktop - 41.png', 'Desktop - 42.png',
-      'Desktop - 63.png', 'Desktop - 61.png', 'Desktop - 62.png',
-      'Desktop - 43.png', 'Desktop - 47.png', 'Desktop - 49.png',
-      'Desktop - 50.png', 'Desktop - 51.png', 'Desktop - 52.png',
-      'Desktop - 53.png', 'Desktop - 54.png', 'Desktop - 55.png',
-      'Desktop - 56.png', 'Desktop - 57.png', 'Desktop - 58.png',
-      'Desktop - 59.png', 'Desktop - 60.png'
+      'export pages/1.png', 'export pages/2.png',
+      'export pages/3.png', 'export pages/4.png',
+      'export pages/V2/Desktop - 61.png', 'export pages/V2/Desktop - 62.png',
+      'export pages/V2/Desktop - 43.png', 'export pages/V2/Desktop - 47.png',
+      'export pages/V2/Desktop - 49.png', 'export pages/V2/Desktop - 50.png',
+      'export pages/V2/Desktop - 51.png', 'export pages/V2/Desktop - 52.png',
+      'export pages/V2/Desktop - 53.png', 'export pages/V2/Desktop - 54.png',
+      'export pages/V2/Desktop - 55.png', 'export pages/V2/Desktop - 56.png',
+      'export pages/V2/Desktop - 57.png', 'export pages/V2/Desktop - 58.png',
+      'export pages/V2/Desktop - 59.png', 'export pages/V2/Desktop - 60.png'
     ];
 
     const pageEls = PAGE_FILES.map((file, i) => {
@@ -253,7 +256,7 @@
       div.className = 'page';
 
       const img = document.createElement('img');
-      img.src      = `export pages/V2/${file}`;
+      img.src      = file;
       img.alt      = `Page ${i + 1}`;
       img.draggable = false;
 
