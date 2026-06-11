@@ -393,12 +393,16 @@
                                 imgRect.height / page4img.naturalHeight);
       const rW = page4img.naturalWidth  * scale;
       const rH = page4img.naturalHeight * scale;
-      const imgOX = imgRect.left + (imgRect.width  - rW) / 2 - pageRect.left;
       const imgOY = imgRect.top  + (imgRect.height - rH) / 2 - pageRect.top;
 
-      const w = DRAW_FRAC.width  * rW * 1.2;
-      const h = DRAW_FRAC.height * rH * 1.2;
-      const left    = imgOX + (rW - w) / 2;
+      // Exact natural proportions of the drawings (790×374 / 846×1153)
+      const w = DRAW_FRAC.width  * rW;
+      const h = DRAW_FRAC.height * rH;
+
+      // Horizontally centered on the full page
+      const left = (pageRect.width - w) / 2;
+
+      // Vertically centered in the yellow area
       const areaTop = imgOY + DRAW_FRAC.top * rH;
       const areaH   = rH * (1 - DRAW_FRAC.top);
       const top     = areaTop + (areaH - h) / 2;
