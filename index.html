@@ -386,20 +386,30 @@
       return f;
     });
 
-    // ─── Page 3 : filtre couleur ─────────────────────────────────────
+    // ─── Page 3 : filtre couleur cyclique ───────────────────────────
     const page3img = pageEls[2].querySelector('img');
     page3img.style.transition = 'filter 2s ease';
-    let page3ColorTimer = null;
+    const PAGE3_FILTERS = [
+      'sepia(0.7) brightness(1.05)',
+      'hue-rotate(195deg) saturate(0.55) brightness(1.08)',
+    ];
+    let page3FilterIdx = 0, page3ColorTimer = null, page3CycleTimer = null;
 
     function startPage3Color() {
+      page3FilterIdx = 0;
       page3ColorTimer = setTimeout(() => {
-        page3img.style.filter = 'sepia(0.7) brightness(1.05)';
+        page3img.style.filter = PAGE3_FILTERS[0];
+        page3CycleTimer = setInterval(() => {
+          page3FilterIdx = (page3FilterIdx + 1) % PAGE3_FILTERS.length;
+          page3img.style.filter = PAGE3_FILTERS[page3FilterIdx];
+        }, 3500);
       }, 3000);
     }
 
     function stopPage3Color() {
       clearTimeout(page3ColorTimer);
-      page3ColorTimer = null;
+      clearInterval(page3CycleTimer);
+      page3ColorTimer = page3CycleTimer = null;
       page3img.style.filter = '';
     }
 
