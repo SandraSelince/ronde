@@ -170,6 +170,23 @@
     }
     .draw-anim-frame.show { opacity: 1; }
 
+    /* ─── Page 7 yellow rise ─────────────────────────────────────── */
+    #page7-yellow-overlay {
+      position: fixed;
+      z-index: 110;
+      pointer-events: none;
+      transform: scaleY(0);
+      transform-origin: bottom center;
+      background: linear-gradient(to top, rgba(255, 210, 0, 0.55), transparent);
+    }
+    @keyframes page7-yellow-rise {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+    #page7-yellow-overlay.active {
+      animation: page7-yellow-rise 12s ease-out forwards;
+    }
+
     /* ─── Hint ────────────────────────────────────────────────────── */
     #hint {
       position: fixed;
@@ -352,6 +369,9 @@
       if (current === 2) startPage3Color();
       else if (prev === 2) stopPage3Color();
 
+      if (current === 6) startPage7Yellow();
+      else if (prev === 6) stopPage7Yellow();
+
       setTimeout(() => { isAnimating = false; }, 750);
     }
 
@@ -473,10 +493,52 @@
       }, 900);
     }
 
-    window.addEventListener('resize', () => { if (current === 3) positionDrawOverlay(); });
+    window.addEventListener('resize', () => {
+      if (current === 3) positionDrawOverlay();
+      if (current === 6) positionYellowOverlay();
+    });
     page4img.addEventListener('load', () => {
       if (current === 3 && drawOverlay.classList.contains('active')) positionDrawOverlay();
     });
+
+    // ─── Page 7 : montée du jaune ────────────────────────────────────
+    const page7img = pageEls[6].querySelector('img');
+    const yellowOverlay = document.createElement('div');
+    yellowOverlay.id = 'page7-yellow-overlay';
+    document.body.appendChild(yellowOverlay);
+    let page7Timer = null;
+
+    function positionYellowOverlay() {
+      if (!page7img.naturalWidth) return;
+      const r  = page7img.getBoundingClientRect();
+      const nW = page7img.naturalWidth, nH = page7img.naturalHeight;
+      const sc = Math.min(r.width / nW, r.height / nH);
+      const rW = nW * sc, rH = nH * sc;
+      const imgX = r.left + (r.width  - rW) / 2;
+      const imgY = r.top  + (r.height - rH) / 2;
+      const h = rH * 0.6; // monte sur 60% de la hauteur de l'image
+      Object.assign(yellowOverlay.style, {
+        left:   imgX + 'px',
+        top:    (imgY + rH - h) + 'px',
+        width:  rW + 'px',
+        height: h + 'px',
+      });
+    }
+
+    function startPage7Yellow() {
+      page7Timer = setTimeout(() => {
+        positionYellowOverlay();
+        yellowOverlay.classList.add('active');
+      }, 750);
+    }
+
+    function stopPage7Yellow() {
+      clearTimeout(page7Timer);
+      page7Timer = null;
+      yellowOverlay.classList.remove('active');
+      void yellowOverlay.getBoundingClientRect();
+      yellowOverlay.style.transform = 'scaleY(0)';
+    }
 
     // ─── Keyboard ────────────────────────────────────────────────────
     document.addEventListener('keydown', e => {
