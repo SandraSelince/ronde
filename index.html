@@ -177,7 +177,8 @@
       pointer-events: none;
       transform: scaleY(0);
       transform-origin: bottom center;
-      background: linear-gradient(to top, rgba(255, 210, 0, 0.55), transparent);
+      mix-blend-mode: multiply;
+      background: linear-gradient(to top, rgb(255, 210, 0), transparent);
     }
     @keyframes page7-yellow-rise {
       from { transform: scaleY(0); }
@@ -516,7 +517,7 @@
       const rW = nW * sc, rH = nH * sc;
       const imgX = r.left + (r.width  - rW) / 2;
       const imgY = r.top  + (r.height - rH) / 2;
-      const h = rH * 0.6; // monte sur 60% de la hauteur de l'image
+      const h = rH * 0.85; // monte sur 85% de la hauteur de l'image
       Object.assign(yellowOverlay.style, {
         left:   imgX + 'px',
         top:    (imgY + rH - h) + 'px',
