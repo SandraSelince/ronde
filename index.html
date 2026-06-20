@@ -369,8 +369,6 @@
       if (current === 3) startDrawAnim();
       else if (prev === 3) stopDrawAnim();
 
-      if (current === 2) startPage3Color();
-      else if (prev === 2) stopPage3Color();
 
       if (current === 7) startPage7Yellow();
       else if (prev === 7) stopPage7Yellow();
@@ -409,32 +407,6 @@
       return f;
     });
 
-    // ─── Page 3 : filtre couleur cyclique ───────────────────────────
-    const page3img = pageEls[2].querySelector('img');
-    page3img.style.transition = 'filter 2s ease';
-    const PAGE3_FILTERS = [
-      'hue-rotate(0deg)   sepia(0.7) saturate(1)    brightness(1.05)',
-      'hue-rotate(195deg) sepia(0)   saturate(0.55) brightness(1.08)',
-    ];
-    let page3FilterIdx = 0, page3ColorTimer = null, page3CycleTimer = null;
-
-    function startPage3Color() {
-      page3FilterIdx = 0;
-      page3ColorTimer = setTimeout(() => {
-        page3img.style.filter = PAGE3_FILTERS[0];
-        page3CycleTimer = setInterval(() => {
-          page3FilterIdx = (page3FilterIdx + 1) % PAGE3_FILTERS.length;
-          page3img.style.filter = PAGE3_FILTERS[page3FilterIdx];
-        }, 3500);
-      }, 3000);
-    }
-
-    function stopPage3Color() {
-      clearTimeout(page3ColorTimer);
-      clearInterval(page3CycleTimer);
-      page3ColorTimer = page3CycleTimer = null;
-      page3img.style.filter = '';
-    }
 
     let drawFrameIdx = -1, drawStartTimer = null, drawCycleTimer = null;
 
