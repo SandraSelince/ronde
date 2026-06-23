@@ -278,7 +278,8 @@
     const PAGE_FILES = [
       'export pages/1.png', 'export pages/2.png',
       'export pages/3.png', 'export pages/4.png',
-      'export pages/V2/Desktop - 43.png', 'export pages/V2/Desktop - 47.png',
+      'export pages/V2/Desktop - 43.png', 'export pages/20 juin/6.png',
+      'export pages/20 juin/8.png',
       'export pages/7.png',
       'export pages/V2/Desktop - 49.png', 'export pages/9.png',
       'export pages/10.png', 'export pages/11.png',
@@ -370,8 +371,8 @@
       else if (prev === 3) stopDrawAnim();
 
 
-      if (current === 7) startPage7Yellow();
-      else if (prev === 7) stopPage7Yellow();
+      if (current === 8) startPage7Yellow();
+      else if (prev === 8) stopPage7Yellow();
 
       setTimeout(() => { isAnimating = false; }, 750);
     }
@@ -470,14 +471,14 @@
 
     window.addEventListener('resize', () => {
       if (current === 3) positionDrawOverlay();
-      if (current === 7) positionYellowOverlay();
+      if (current === 8) positionYellowOverlay();
     });
     page4img.addEventListener('load', () => {
       if (current === 3 && drawOverlay.classList.contains('active')) positionDrawOverlay();
     });
 
     // ─── Page 7 : montée du jaune ────────────────────────────────────
-    const page7img = pageEls[7].querySelector('img');
+    const page7img = pageEls[8].querySelector('img');
     const yellowOverlay = document.createElement('div');
     yellowOverlay.id = 'page7-yellow-overlay';
     document.body.appendChild(yellowOverlay);
