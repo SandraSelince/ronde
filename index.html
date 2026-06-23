@@ -60,6 +60,37 @@
       /* L'ombre varie aussi selon la distance — appliquée via JS */
     }
 
+    /* ─── Zoom controls (desktop uniquement) ──────────────────────── */
+    #zoom-controls {
+      position: fixed;
+      bottom: 34px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+    body:hover #zoom-controls { opacity: 1; }
+    .zoom-btn {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.75);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .zoom-btn:hover  { background: rgba(255,255,255,0.28); }
+    .zoom-btn:disabled { opacity: 0.25; cursor: default; }
+    @media (max-width: 768px) { #zoom-controls { display: none; } }
+
     /* ─── Mobile : image plein écran ─────────────────────────────── */
     @media (max-width: 768px) {
       .page {
@@ -280,6 +311,7 @@
     // ─── État ───────────────────────────────────────────────────────
     let current     = 0;
     let isAnimating = false;
+    let zoomLevel = 1, zoomPanX = 0, zoomPanY = 0;
 
     // ─── Build DOM ──────────────────────────────────────────────────
     const viewer  = document.getElementById('viewer');
@@ -368,6 +400,11 @@
     // ─── Navigation ─────────────────────────────────────────────────
     function goTo(index, animate = true) {
       if (isAnimating || index === current) return;
+      if (zoomLevel !== 1) {
+        const pi = pageEls[current].querySelector('img');
+        pi.style.transform = ''; pi.style.cursor = '';
+        zoomLevel = 1; zoomPanX = 0; zoomPanY = 0;
+      }
       isAnimating = true;
       const prev  = current;
       current     = ((index % TOTAL) + TOTAL) % TOTAL;
@@ -526,9 +563,32 @@
     }
 
     // ─── Keyboard ────────────────────────────────────────────────────
+    // ─── Zoom ────────────────────────────────────────────────────────
+    function applyZoom(smooth) {
+      const img = pageEls[current].querySelector('img');
+      img.style.transition = smooth ? 'transform 0.2s ease' : 'none';
+      if (zoomLevel <= 1) {
+        img.style.transform = ''; img.style.cursor = '';
+      } else {
+        img.style.transform = `scale(${zoomLevel}) translate(${zoomPanX/zoomLevel}px,${zoomPanY/zoomLevel}px)`;
+        img.style.cursor = 'grab';
+      }
+      document.getElementById('zoom-in-btn').disabled  = zoomLevel >= 4;
+      document.getElementById('zoom-out-btn').disabled = zoomLevel <= 1;
+    }
+    function zoomIn()    { zoomLevel = Math.min(+(zoomLevel + 0.35).toFixed(2), 4); applyZoom(true); }
+    function zoomOut()   { zoomLevel = Math.max(+(zoomLevel - 0.35).toFixed(2), 1); if (zoomLevel <= 1) { zoomPanX = 0; zoomPanY = 0; } applyZoom(true); }
+    function resetZoom() { zoomLevel = 1; zoomPanX = 0; zoomPanY = 0; applyZoom(true); }
+
+    document.getElementById('zoom-in-btn').addEventListener('click',  zoomIn);
+    document.getElementById('zoom-out-btn').addEventListener('click', zoomOut);
+
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goNext(); }
       if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); goPrev(); }
+      if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomIn(); }
+      if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomOut(); }
+      if (e.key === '0')                  { e.preventDefault(); resetZoom(); }
     });
 
     // ─── Boutons ─────────────────────────────────────────────────────
@@ -553,14 +613,26 @@
       txStart = null;
     }, { passive: true });
 
-    // ─── Glisser souris ──────────────────────────────────────────────
-    let mxStart = null, isDragging = false;
+    // ─── Glisser souris (navigation ou pan selon zoom) ───────────────
+    let mxStart = null, myStart = null, isDragging = false;
+    let zoomPanX0 = 0, zoomPanY0 = 0;
 
-    viewer.addEventListener('mousedown', e => { mxStart = e.clientX; isDragging = true; });
-    window.addEventListener('mouseup',   e => {
+    viewer.addEventListener('mousedown', e => {
+      mxStart = e.clientX; myStart = e.clientY; isDragging = true;
+      if (zoomLevel > 1) { zoomPanX0 = zoomPanX; zoomPanY0 = zoomPanY; }
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isDragging || zoomLevel <= 1) return;
+      zoomPanX = zoomPanX0 + e.clientX - mxStart;
+      zoomPanY = zoomPanY0 + e.clientY - myStart;
+      applyZoom(false);
+    });
+    window.addEventListener('mouseup', e => {
       if (!isDragging) return;
-      const dx = e.clientX - mxStart;
-      if (Math.abs(dx) > 55) { dx < 0 ? goNext() : goPrev(); }
+      if (zoomLevel <= 1) {
+        const dx = e.clientX - mxStart;
+        if (Math.abs(dx) > 55) { dx < 0 ? goNext() : goPrev(); }
+      }
       isDragging = false;
     });
 
@@ -568,6 +640,8 @@
     let wCooldown = false;
     viewer.addEventListener('wheel', e => {
       e.preventDefault();
+      if (e.ctrlKey) { e.deltaY < 0 ? zoomIn() : zoomOut(); return; }
+      if (zoomLevel > 1) return;
       if (wCooldown) return;
       const d = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       d > 0 ? goNext() : goPrev();
@@ -583,5 +657,9 @@
     }
     setTimeout(hideHint, 4500);
   </script>
+  <div id="zoom-controls">
+    <button id="zoom-in-btn"  class="zoom-btn" aria-label="Zoom +">+</button>
+    <button id="zoom-out-btn" class="zoom-btn" aria-label="Zoom −">−</button>
+  </div>
 </body>
 </html>
