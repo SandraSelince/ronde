@@ -327,6 +327,12 @@
 
       div.appendChild(img);
       viewer.appendChild(div);
+      if (i === TOTAL - 1) {
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+          if (current === TOTAL - 1) window.open('https://memmofficiel.fr/', '_blank');
+        });
+      }
       return div;
     });
 
