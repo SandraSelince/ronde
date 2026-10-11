@@ -10,6 +10,7 @@
 /*.webp
 /*.png
 /*.PNG
+!/favicon.png
 /text.png
 /cercles.png
 /voltigeuse.png
